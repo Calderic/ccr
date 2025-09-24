@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 配置变量
-BASE_URL="http://154.12.94.140:3000"
+BASE_URL="https://claudecc.top"
 API_KEY=""
 
 # 打印函数
