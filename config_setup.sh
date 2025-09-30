@@ -305,6 +305,29 @@ EOF
     return 0
 }
 
+# 配置VSCode Claude插件
+configure_vscode_claude() {
+    print_step "配置 VSCode Claude 插件..."
+
+    local claude_dir="$HOME/.claude"
+    local config_file="$claude_dir/config.json"
+    mkdir -p "$claude_dir"
+
+    # 备份旧配置
+    backup_file "$config_file"
+
+    # 创建config.json
+    cat > "$config_file" <<EOF
+{
+  "primaryApiKey": "crs"
+}
+EOF
+
+    print_info "已创建 $config_file"
+
+    return 0
+}
+
 # Windows 配置
 configure_windows() {
     print_info "开始 Windows 配置..."
@@ -352,10 +375,11 @@ configure_windows() {
     echo "1) Claude Code"
     echo "2) Gemini CLI"
     echo "3) Codex"
-    echo "4) 全部配置"
+    echo "4) VSCode Claude 插件"
+    echo "5) 全部配置"
     echo "0) 跳过配置"
 
-    read -p "请选择 [1-4,0]: " choice
+    read -p "请选择 [1-5,0]: " choice
 
     case $choice in
         1)
@@ -377,9 +401,16 @@ configure_windows() {
             if [ -z "$API_KEY" ]; then
                 prompt_input "API密钥" API_KEY ""
             fi
+            configure_vscode_claude
+            ;;
+        5)
+            if [ -z "$API_KEY" ]; then
+                prompt_input "API密钥" API_KEY ""
+            fi
             configure_claude_code_env
             configure_gemini_env
             configure_codex
+            configure_vscode_claude
             ;;
         0)
             print_info "跳过环境变量配置"
@@ -604,10 +635,11 @@ configure_macos() {
     echo "1) Claude Code"
     echo "2) Gemini CLI"
     echo "3) Codex"
-    echo "4) 全部配置"
+    echo "4) VSCode Claude 插件"
+    echo "5) 全部配置"
     echo "0) 跳过配置"
 
-    read -p "请选择 [1-4,0]: " choice
+    read -p "请选择 [1-5,0]: " choice
 
     case $choice in
         1)
@@ -629,9 +661,16 @@ configure_macos() {
             if [ -z "$API_KEY" ]; then
                 prompt_input "API密钥" API_KEY ""
             fi
+            configure_vscode_claude
+            ;;
+        5)
+            if [ -z "$API_KEY" ]; then
+                prompt_input "API密钥" API_KEY ""
+            fi
             configure_claude_code_env_macos
             configure_gemini_env_macos
             configure_codex
+            configure_vscode_claude
             ;;
         0)
             print_info "跳过环境变量配置"
@@ -907,10 +946,11 @@ configure_linux() {
     echo "1) Claude Code"
     echo "2) Gemini CLI"
     echo "3) Codex"
-    echo "4) 全部配置"
+    echo "4) VSCode Claude 插件"
+    echo "5) 全部配置"
     echo "0) 跳过配置"
 
-    read -p "请选择 [1-4,0]: " choice
+    read -p "请选择 [1-5,0]: " choice
 
     case $choice in
         1)
@@ -932,9 +972,16 @@ configure_linux() {
             if [ -z "$API_KEY" ]; then
                 prompt_input "API密钥" API_KEY ""
             fi
+            configure_vscode_claude
+            ;;
+        5)
+            if [ -z "$API_KEY" ]; then
+                prompt_input "API密钥" API_KEY ""
+            fi
             configure_claude_code_env_linux
             configure_gemini_env_linux
             configure_codex
+            configure_vscode_claude
             ;;
         0)
             print_info "跳过环境变量配置"
@@ -1031,6 +1078,12 @@ clean_windows() {
         rm -rf "$HOME/.codex"
     fi
 
+    # 清除VSCode Claude配置文件
+    if [ -d "$HOME/.claude" ]; then
+        print_info "删除 VSCode Claude 配置目录..."
+        rm -rf "$HOME/.claude"
+    fi
+
     print_info "Windows 配置清除完成"
 }
 
@@ -1054,6 +1107,12 @@ clean_macos() {
     if [ -d "$HOME/.codex" ]; then
         print_info "删除 Codex 配置目录..."
         rm -rf "$HOME/.codex"
+    fi
+
+    # 清除VSCode Claude配置文件
+    if [ -d "$HOME/.claude" ]; then
+        print_info "删除 VSCode Claude 配置目录..."
+        rm -rf "$HOME/.claude"
     fi
 
     # 清除npm全局目录配置（如果存在）
@@ -1090,6 +1149,12 @@ clean_linux() {
         rm -rf "$HOME/.codex"
     fi
 
+    # 清除VSCode Claude配置文件
+    if [ -d "$HOME/.claude" ]; then
+        print_info "删除 VSCode Claude 配置目录..."
+        rm -rf "$HOME/.claude"
+    fi
+
     # 清除npm全局目录配置（如果存在）
     if grep -q "export PATH=~/.npm-global/bin:" "$SHELL_CONFIG" 2>/dev/null; then
         sed -i.tmp "/export PATH=~\/.npm-global\/bin:/d" "$SHELL_CONFIG" 2>/dev/null || \
@@ -1112,6 +1177,7 @@ clean_all_configs() {
     print_warn "- Claude Code 环境变量 (ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN)"
     print_warn "- Gemini CLI 环境变量 (CODE_ASSIST_ENDPOINT, GOOGLE_CLOUD_ACCESS_TOKEN, GOOGLE_GENAI_USE_GCA)"
     print_warn "- Codex 配置目录 (~/.codex)"
+    print_warn "- VSCode Claude 插件配置目录 (~/.claude)"
     print_warn "- npm全局目录配置（如果有）"
     print_warn ""
     print_warn "注意：这不会卸载已安装的软件（Node.js, Claude Code等）"
@@ -1151,7 +1217,7 @@ show_menu() {
     echo "         自动配置脚本"
     echo "========================================"
     echo "请选择操作："
-    echo "1) 配置工具环境"
+    echo "1) 配置工具环境 (Claude V2.0)"
     echo "2) 清除所有配置"
     echo "0) 退出"
     echo ""

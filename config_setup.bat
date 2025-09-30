@@ -44,7 +44,7 @@ exit /b 0
 set "MENU_CHOICE="
 :menu_loop
 call :print_step "请选择操作："
-echo 1) 配置工具环境
+echo 1) 配置工具环境 (Claude V2.0)
 echo 2) 清除所有配置
 echo 0) 退出
 set /p "MENU_CHOICE=请选择 [0-2] (默认1): "
@@ -111,10 +111,11 @@ call :print_step "选择要配置的工具："
 echo 1) Claude Code
 echo 2) Gemini CLI
 echo 3) Codex
-echo 4) 全部配置
+echo 4) VSCode Claude 插件
+echo 5) 全部配置
 echo 0) 跳过配置
 set "choice="
-set /p "choice=请选择 [1-4,0] (默认1): "
+set /p "choice=请选择 [1-5,0] (默认1): "
 if "%choice%"=="" set "choice=1"
 
 if "%choice%"=="1" (
@@ -127,11 +128,16 @@ if "%choice%"=="1" (
     call :configure_codex
     if errorlevel 1 exit /b 1
 ) else if "%choice%"=="4" (
+    call :configure_vscode_claude
+    if errorlevel 1 exit /b 1
+) else if "%choice%"=="5" (
     call :configure_claude_code_env
     if errorlevel 1 exit /b 1
     call :configure_gemini_env
     if errorlevel 1 exit /b 1
     call :configure_codex
+    if errorlevel 1 exit /b 1
+    call :configure_vscode_claude
     if errorlevel 1 exit /b 1
 ) else if "%choice%"=="0" (
     call :print_info "跳过环境变量配置"
@@ -312,6 +318,33 @@ call :print_info "已创建 %CODEX_DIR%\auth.json"
 
 exit /b 0
 
+:configure_vscode_claude
+call :print_step "配置 VSCode Claude 插件..."
+if not defined API_KEY (
+    call :ensure_api_key
+    if errorlevel 1 exit /b 1
+)
+
+set "CLAUDE_DIR=%HOME%\.claude"
+if not exist "%CLAUDE_DIR%" (
+    mkdir "%CLAUDE_DIR%"
+    if errorlevel 1 (
+        call :print_error "创建目录 %CLAUDE_DIR% 失败"
+        exit /b 1
+    )
+)
+
+call :backup_file "%CLAUDE_DIR%\config.json"
+
+(
+    echo {
+    echo   "primaryApiKey": "crs"
+    echo }
+) > "%CLAUDE_DIR%\config.json"
+call :print_info "已创建 %CLAUDE_DIR%\config.json"
+
+exit /b 0
+
 :ensure_api_key
 if defined API_KEY (
     if not "%API_KEY%"=="" exit /b 0
@@ -346,6 +379,7 @@ call :print_warn "这将删除："
 call :print_warn "- Claude Code 环境变量 (ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN)"
 call :print_warn "- Gemini CLI 环境变量 (CODE_ASSIST_ENDPOINT, GOOGLE_CLOUD_ACCESS_TOKEN, GOOGLE_GENAI_USE_GCA)"
 call :print_warn "- Codex 配置目录 (~/.codex)"
+call :print_warn "- VSCode Claude 插件配置目录 (~/.claude)"
 call :print_warn ""
 call :print_warn "注意：这不会卸载已安装的软件（Node.js, Claude Code等）"
 call :print_warn "============================================"
@@ -378,6 +412,12 @@ set "CODEX_DIR=%HOME%\.codex"
 if exist "%CODEX_DIR%" (
     call :print_info "删除 Codex 配置目录..."
     rmdir /S /Q "%CODEX_DIR%"
+)
+
+set "CLAUDE_DIR=%HOME%\.claude"
+if exist "%CLAUDE_DIR%" (
+    call :print_info "删除 VSCode Claude 配置目录..."
+    rmdir /S /Q "%CLAUDE_DIR%"
 )
 
 call :print_info "Windows 配置清除完成"
